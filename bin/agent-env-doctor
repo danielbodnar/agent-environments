@@ -1,0 +1,61 @@
+#!/bin/sh
+# agent-env-doctor: report what this surface has and what it's missing.
+#
+# Usage: agent-env-doctor [--strict]
+#
+# Prints the detected surface, each expected tool with its version or
+# MISSING, 1Password auth state, and the installed Claude plugins.
+# --strict exits 1 when a core tool is missing (CI and image smoke tests).
+set -u
+
+AGENT_ENV_HOME=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+. "$AGENT_ENV_HOME/bootstrap/lib/detect.sh"
+
+strict=0
+[ "${1:-}" = --strict ] && strict=1
+
+PATH="$AGENT_ENV_HOME/bin:$HOME/.local/bin:${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims:$PATH"
+export PATH
+
+echo "surface: $(agent_env_surface)"
+echo "home:    $AGENT_ENV_HOME"
+echo
+
+# Executable names for the core profile. Some tools ship a binary with
+# another name (ripgrep -> rg, nushell -> nu).
+core_bins="mise bun node nu just rg fd sd ast-grep jq yq gh oxlint oxfmt biome rumdl dprint taplo shellcheck shfmt prek osv-scanner gitleaks socket sfw vlt wrangler cf op claude"
+
+missing=0
+printf '%-14s %s\n' TOOL VERSION
+for b in $core_bins; do
+	if command -v "$b" >/dev/null 2>&1; then
+		v=$("$b" --version 2>/dev/null | head -n1 | cut -c1-60)
+		printf '%-14s %s\n' "$b" "${v:-present}"
+	else
+		printf '%-14s %s\n' "$b" MISSING
+		missing=$((missing + 1))
+	fi
+done
+
+echo
+echo "1password:"
+"$AGENT_ENV_HOME/bin/with-secrets" --check 2>&1 | sed 's/^/  /'
+
+echo
+echo "claude plugins:"
+if ! command -v claude >/dev/null 2>&1; then
+	echo "  claude not installed"
+elif [ -n "${CLAUDE_CODE_PLUGIN_SEED_DIR:-}" ]; then
+	# `claude plugin list` doesn't show seeded plugins; they register at
+	# session start. Read the seed's manifest instead.
+	echo "  seed: $CLAUDE_CODE_PLUGIN_SEED_DIR"
+	jq -r '.plugins | keys[] | "  " + .' "$CLAUDE_CODE_PLUGIN_SEED_DIR/installed_plugins.json" 2>/dev/null ||
+		echo "  seed manifest unreadable"
+else
+	claude plugin list 2>&1 | sed 's/^/  /'
+fi
+
+echo
+echo "missing core tools: $missing"
+[ "$strict" = 1 ] && [ "$missing" -gt 0 ] && exit 1
+exit 0

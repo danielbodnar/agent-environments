@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        with:
+          working_directory: .
+      - name: Lint shell
+        run: |
+          shellcheck bootstrap/*.sh bootstrap/lib/*.sh bin/* claude/hooks/* scripts/*.sh self-hosted/*.sh
+          shfmt -d bootstrap bin claude/hooks scripts self-hosted
+      - name: Lint Markdown
+        run: rumdl check .
+      - name: Lint workflows
+        run: |
+          actionlint
+          zizmor --min-severity medium .github
+      - name: Tests
+        run: bats tests/
+
+  setup:
+    # Runs the real setup on a clean GitHub runner, the way the composite
+    # action does for other repos.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-agent-env
+        with:
+          layers: system,tools,op,claude
+      - name: Doctor
+        run: agent-env-doctor --strict
+      - name: Second run is a no-op
+        run: |
+          start=$(date +%s)
+          sh bootstrap/setup.sh --profile core --only system,tools,op,claude
+          echo "second run: $(( $(date +%s) - start ))s"
+
+  cloud-like:
+    # The Claude cloud setup script path: root, Ubuntu 24.04, no secrets.
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    steps:
+      - name: Base packages
+        run: apt-get update -qq && apt-get install -y -qq curl ca-certificates git
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup as the cloud would run it
+        env:
+          AGENT_ENV_SURFACE: claude-cloud
+        run: |
+          start=$(date +%s)
+          sh bootstrap/setup.sh --profile core
+          elapsed=$(( $(date +%s) - start ))
+          echo "setup took ${elapsed}s"
+          [ "$elapsed" -lt 300 ] || { echo "over the 5-minute cache window"; exit 1; }
+      - name: Doctor
+        env:
+          AGENT_ENV_SURFACE: claude-cloud
+        run: bin/agent-env-doctor --strict

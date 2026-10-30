@@ -1,0 +1,4 @@
+.git
+.tmp
+**/1password-credentials.json
+**/.env

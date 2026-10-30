@@ -1,0 +1,70 @@
+# Full agent toolchain: core plus heavier tools for images that are built
+# once and reused (devcontainer, Docker Sandboxes, self-hosted runners,
+# nspawn). Keep the core section identical to ../core/mise.toml;
+# tests/tools.bats checks that.
+
+[tools]
+# Runtimes
+bun = "latest"
+node = "latest"
+
+# Shell, tasks, search
+"aqua:nushell/nushell" = "latest"
+"aqua:casey/just" = "latest"
+"aqua:BurntSushi/ripgrep" = "latest"
+"aqua:sharkdp/fd" = "latest"
+"aqua:chmln/sd" = "latest"
+"aqua:ast-grep/ast-grep" = "latest"
+"aqua:jqlang/jq" = "latest"
+"aqua:mikefarah/yq" = "latest"
+"aqua:cli/cli" = "latest"
+
+# Lint and format: Oxc and Biome first, then Markdown, TOML, shell
+"aqua:oxc-project/oxc/oxlint" = "latest"
+"npm:oxfmt" = "latest"
+"aqua:biomejs/biome" = "latest"
+"aqua:rvben/rumdl" = "latest"
+"aqua:dprint/dprint" = "latest"
+"aqua:tamasfe/taplo" = "latest"
+"aqua:koalaman/shellcheck" = "latest"
+"aqua:mvdan/sh" = "latest"
+"aqua:j178/prek" = "latest"
+
+# Supply chain
+"aqua:google/osv-scanner" = "latest"
+"aqua:gitleaks/gitleaks" = "latest"
+"npm:socket" = "1.12.1"
+"npm:sfw" = "2.0.6"
+
+# Registry and Cloudflare
+"npm:vlt" = "1.6.1"
+"npm:wrangler" = "4.156.0"
+"npm:cf" = "1.0.0-beta.26"
+
+"aqua:cloudflare/cloudflared" = "latest"
+"gitlab:gitlab-org/cli" = "latest"
+"aqua:jj-vcs/jj" = "latest"
+"aqua:d2lang/d2" = "latest"
+"aqua:lycheeverse/lychee" = "latest"
+
+# CI and image hygiene
+"aqua:rhysd/actionlint" = "latest"
+"aqua:zizmorcore/zizmor" = "latest"
+"aqua:suzuki-shunsuke/pinact" = "latest"
+"aqua:hadolint/hadolint" = "latest"
+"aqua:bats-core/bats-core" = "latest"
+
+# Supply chain and signing
+"aqua:sigstore/cosign" = "latest"
+"aqua:anchore/syft" = "latest"
+"aqua:aquasecurity/trivy" = "latest"
+"aqua:trufflesecurity/trufflehog" = "latest"
+
+# Sandboxing
+"github:nolabs-ai/nono" = "latest"
+
+[settings]
+experimental = true
+# Bun installs the npm: tools. The Claude cloud proxy has known problems
+# with Bun, so setup.sh sets MISE_NPM_PACKAGE_MANAGER=npm there.
+npm.package_manager = "bun"

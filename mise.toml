@@ -1,0 +1,13 @@
+# Tools for working on this repo (lint, test). The agent toolchain this
+# repo installs lives in tools/<profile>/mise.toml.
+[tools]
+"aqua:casey/just" = "latest"
+"aqua:koalaman/shellcheck" = "latest"
+"aqua:mvdan/sh" = "latest"
+"aqua:rvben/rumdl" = "latest"
+"aqua:rhysd/actionlint" = "latest"
+"aqua:zizmorcore/zizmor" = "latest"
+"aqua:bats-core/bats-core" = "latest"
+"aqua:jqlang/jq" = "latest"
+"aqua:mikefarah/yq" = "latest"
+"aqua:suzuki-shunsuke/pinact" = "latest"

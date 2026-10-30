@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "name": "agent-env",
+    "description": "Claude Code with the agent-environments toolchain: mise tools, Bun, the Claude config dir, and the repo in the working directory"
+  },
+  "extends": ["mise-dev", "bun-dev"],
+  "workdir": { "access": "readwrite" },
+  "filesystem": {
+    "allow": [
+      "$HOME/.claude",
+      "$HOME/.cache",
+      "$HOME/.local/share/claude",
+      "$HOME/.local/state/claude"
+    ],
+    "read": [
+      "$HOME/.local/bin",
+      "$HOME/.local/share/mise",
+      "$XDG_CONFIG_HOME/mise",
+      "$HOME/.config/op"
+    ],
+    "allow_file": ["$HOME/.claude.json"]
+  },
+  "network": {
+    "allow_domain": [
+      "api.anthropic.com",
+      "claude.ai",
+      "*.claude.ai",
+      "platform.claude.com",
+      "statsig.anthropic.com",
+      "github.com",
+      "api.github.com",
+      "*.githubusercontent.com",
+      "registry.npmjs.org",
+      "registry.vlt.io",
+      "api.socket.dev",
+      "api.osv.dev",
+      "*.1password.com",
+      "api.cloudflare.com"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+# <plugin>@<marketplace>, one per line. The curated core set installed on
+# every surface. Keep it short: the Claude cloud setup script has about
+# five minutes to finish before its result stops being cached.
+superpowers@claude-plugins-official
+plugin-dev@claude-plugins-official
+pr-review-toolkit@claude-plugins-official
+code-review@claude-plugins-official
+commit-commands@claude-plugins-official
+feature-dev@claude-plugins-official
+hookify@claude-plugins-official
+context7@claude-plugins-official
+security-guidance@claude-plugins-official
+typescript-lsp@claude-plugins-official
+remember@claude-plugins-official
+cloudflare@cloudflare

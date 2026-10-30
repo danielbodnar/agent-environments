@@ -1,0 +1,52 @@
+# Core agent toolchain. Installed on every surface, including the Claude
+# cloud setup script, so it has to install well inside five minutes.
+#
+# On disposable surfaces setup.sh copies this file and mise.lock into the
+# global mise config. Backends are explicit so the lock resolves the same
+# on every machine. Versions are "latest" and mise.lock pins what that
+# resolves to, except the npm CLIs: those are pinned here to the versions that passed the Socket
+# score gate (socket package shallow, every score >= 90 or accepted).
+
+[tools]
+# Runtimes
+bun = "latest"
+node = "latest"
+
+# Shell, tasks, search
+"aqua:nushell/nushell" = "latest"
+"aqua:casey/just" = "latest"
+"aqua:BurntSushi/ripgrep" = "latest"
+"aqua:sharkdp/fd" = "latest"
+"aqua:chmln/sd" = "latest"
+"aqua:ast-grep/ast-grep" = "latest"
+"aqua:jqlang/jq" = "latest"
+"aqua:mikefarah/yq" = "latest"
+"aqua:cli/cli" = "latest"
+
+# Lint and format: Oxc and Biome first, then Markdown, TOML, shell
+"aqua:oxc-project/oxc/oxlint" = "latest"
+"npm:oxfmt" = "latest"
+"aqua:biomejs/biome" = "latest"
+"aqua:rvben/rumdl" = "latest"
+"aqua:dprint/dprint" = "latest"
+"aqua:tamasfe/taplo" = "latest"
+"aqua:koalaman/shellcheck" = "latest"
+"aqua:mvdan/sh" = "latest"
+"aqua:j178/prek" = "latest"
+
+# Supply chain
+"aqua:google/osv-scanner" = "latest"
+"aqua:gitleaks/gitleaks" = "latest"
+"npm:socket" = "1.12.1"
+"npm:sfw" = "2.0.6"
+
+# Registry and Cloudflare
+"npm:vlt" = "1.6.1"
+"npm:wrangler" = "4.156.0"
+"npm:cf" = "1.0.0-beta.26"
+
+[settings]
+experimental = true
+# Bun installs the npm: tools. The Claude cloud proxy has known problems
+# with Bun, so setup.sh sets MISE_NPM_PACKAGE_MANAGER=npm there.
+npm.package_manager = "bun"

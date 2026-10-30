@@ -1,0 +1,36 @@
+# Quadlet unit for a Claude Code self-hosted runner on the
+# agent-environments image. Install to ~/.config/containers/systemd/ (or
+# /etc/containers/systemd/) and run `systemctl --user daemon-reload`.
+#
+# Secrets come from podman's secret store:
+#   podman secret create claude-environment-secret <file>   # environment key from claude.ai admin
+#   podman secret create op-service-account-token <file>    # optional, for with-secrets
+#
+# The runner exits when its sessions finish (--drain-grace-sec 0, the
+# default), and Restart=always brings it back with a fresh owner lock.
+
+[Unit]
+Description=Claude Code self-hosted runner (agent-environments)
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=ghcr.io/danielbodnar/agent-environments:latest
+ContainerName=claude-runner-%i
+Exec=claude self-hosted-runner \
+  --environment-secret-file /run/secrets/claude-environment-secret \
+  --base-dir /home/agent/runner \
+  --exec-path /opt/agent-environments/self-hosted/runner-wrapper.sh \
+  --capacity 1
+Secret=claude-environment-secret,type=mount,mode=0400,uid=1000
+Secret=op-service-account-token,type=env,target=OP_SERVICE_ACCOUNT_TOKEN
+Volume=claude-runner-%i:/home/agent/runner
+NoNewPrivileges=true
+DropCapability=ALL
+
+[Service]
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

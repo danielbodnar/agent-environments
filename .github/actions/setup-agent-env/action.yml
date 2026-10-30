@@ -1,0 +1,63 @@
+name: Set up agent environment
+description: >-
+  Install the agent-environments toolchain (mise tools, 1Password CLI,
+  Claude Code) on a GitHub-hosted Ubuntu runner, and optionally load
+  1Password secrets into the job environment.
+inputs:
+  profile:
+    description: Tool profile, core or full
+    default: core
+  layers:
+    description: Comma-separated setup.sh layers
+    default: system,tools,op
+  ref:
+    description: agent-environments ref to install from when used from another repo
+    default: main
+  op-env-file:
+    description: Env file of op:// references to export (path in the calling repo). Empty skips it.
+    default: ""
+outputs:
+  home:
+    description: Path of the agent-environments checkout the action installed from
+    value: ${{ steps.fetch.outputs.home }}
+runs:
+  using: composite
+  steps:
+    - name: Fetch agent-environments
+      id: fetch
+      shell: bash
+      env:
+        REF: ${{ inputs.ref }}
+        ACTION_REPO: ${{ github.action_repository }}
+      run: |
+        # Inside this repo, use the checkout; elsewhere clone the requested ref.
+        if [ -f "$GITHUB_WORKSPACE/bootstrap/setup.sh" ] && [ -z "$ACTION_REPO" ]; then
+          echo "home=$GITHUB_WORKSPACE" >>"$GITHUB_OUTPUT"
+        else
+          dest="$RUNNER_TEMP/agent-environments"
+          git clone --depth 1 --branch "$REF" https://github.com/danielbodnar/agent-environments.git "$dest"
+          echo "home=$dest" >>"$GITHUB_OUTPUT"
+        fi
+    - name: Install toolchain
+      shell: bash
+      env:
+        PROFILE: ${{ inputs.profile }}
+        LAYERS: ${{ inputs.layers }}
+        AGENT_ENV_HOME: ${{ steps.fetch.outputs.home }}
+        AGENT_ENV_STRICT: "1"
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        sh "$AGENT_ENV_HOME/bootstrap/setup.sh" --profile "$PROFILE" --only "$LAYERS"
+        {
+          echo "$AGENT_ENV_HOME/bin"
+          echo "$HOME/.local/bin"
+          echo "$HOME/.local/share/mise/shims"
+        } >>"$GITHUB_PATH"
+    - name: Load 1Password secrets
+      if: inputs.op-env-file != ''
+      uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+      with:
+        export-env: true
+        version: 2.41.1
+      env:
+        OP_ENV_FILE: ${{ inputs.op-env-file }}

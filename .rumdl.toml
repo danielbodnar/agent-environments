@@ -1,0 +1,4 @@
+[MD013]
+line-length = 100
+tables = false
+code-blocks = false

@@ -1,0 +1,4 @@
+# <marketplace-name> <github owner/repo>
+# Read by bootstrap/lib/claude.sh and .github/workflows/claude.yml.
+claude-plugins-official anthropics/claude-plugins-official
+cloudflare cloudflare/skills
