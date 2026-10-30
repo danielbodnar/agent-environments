@@ -106,6 +106,14 @@ layout are in the Log.
 - 2026-10-29 [changed] Docker Sandboxes ship as a v3 workload kit
   (`sandboxes/sbx/agent-env/`); `docker sandbox` was removed in favour of
   `sbx` and kits. Not run yet.
+- 2026-10-29 [changed] nono: security review flagged that writable `~/.claude`
+  state (hooks, settings, shell snapshots, plugin data, `.claude.json`) lets a
+  sandboxed agent affect later unsandboxed sessions. `claude-nono` now gives the
+  sandbox its own `CLAUDE_CONFIG_DIR` and `TMPDIR`, and host plugins load as a
+  read-only seed. Checked with a real `claude -p` turn: 32 plugins loaded, host
+  `~/.claude` and `~/.claude.json` unwritable.
+- 2026-10-29 [changed] `claude.yml` no longer passes `OP_SERVICE_ACCOUNT_TOKEN`
+  to the comment-driven agent.
 - 2026-10-29 [todo] Run a real Claude cloud session and record whether
   plugins installed by the setup script survive the snapshot.
 - 2026-10-29 [todo] Deploy 1Password Connect only if service account rate

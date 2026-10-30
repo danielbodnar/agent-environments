@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "agent-env",
-    "description": "Claude Code with the agent-environments toolchain. ~/.claude is read-only except the state directories Claude Code writes, so a sandboxed agent cannot change its own settings, hooks, or plugins."
+    "description": "Claude Code with the agent-environments toolchain, using a sandbox-only config dir (see claude-nono). The host ~/.claude is never writable; installed plugins are read-only."
   },
   "extends": [
     "mise-dev",
@@ -13,38 +13,15 @@
   "filesystem": {
     "allow": [
       "$HOME/.cache",
-      "$HOME/.local/state/claude",
-      "$HOME/.claude/projects",
-      "$HOME/.claude/sessions",
-      "$HOME/.claude/session-env",
-      "$HOME/.claude/shell-snapshots",
-      "$HOME/.claude/todos",
-      "$HOME/.claude/statsig",
-      "$HOME/.claude/debug",
-      "$HOME/.claude/file-history",
-      "$HOME/.claude/backups",
-      "$HOME/.claude/downloads",
-      "$HOME/.claude/plans",
-      "$HOME/.claude/tasks",
-      "$HOME/.claude/paste-cache",
-      "$HOME/.claude/jobs",
-      "$HOME/.claude/ide",
-      "$HOME/.claude/telemetry",
-      "$HOME/.claude/cache",
-      "$HOME/.claude/plugins/data"
+      "$HOME/.local/state/agent-environments/nono-claude"
     ],
     "read": [
-      "$HOME/.claude",
+      "$HOME/.claude/plugins",
       "$HOME/.local/share/claude",
       "$HOME/.local/bin",
       "$HOME/.local/share/mise",
       "$XDG_CONFIG_HOME/mise",
       "$HOME/.config/op"
-    ],
-    "allow_file": [
-      "$HOME/.claude.json",
-      "$HOME/.claude/history.jsonl",
-      "$HOME/.claude/.credentials.json"
     ]
   },
   "network": {

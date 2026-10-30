@@ -20,8 +20,8 @@ doctor:
 
 # Lint shell, Markdown, and workflows
 lint:
-    shellcheck bootstrap/*.sh bootstrap/lib/*.sh bin/* claude/hooks/* scripts/*.sh self-hosted/*.sh
-    shfmt -d bootstrap bin claude/hooks scripts self-hosted
+    shellcheck bootstrap/*.sh bootstrap/lib/*.sh bin/* claude/hooks/* scripts/*.sh self-hosted/*.sh sandboxes/nono/claude-nono sandboxes/nspawn/import.sh
+    shfmt -d bootstrap bin claude/hooks scripts self-hosted sandboxes
     rumdl check .
     actionlint
     zizmor --min-severity medium .github

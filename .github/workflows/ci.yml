@@ -20,8 +20,8 @@ jobs:
           working_directory: .
       - name: Lint shell
         run: |
-          shellcheck bootstrap/*.sh bootstrap/lib/*.sh bin/* claude/hooks/* scripts/*.sh self-hosted/*.sh
-          shfmt -d bootstrap bin claude/hooks scripts self-hosted
+          shellcheck bootstrap/*.sh bootstrap/lib/*.sh bin/* claude/hooks/* scripts/*.sh self-hosted/*.sh sandboxes/nono/claude-nono sandboxes/nspawn/import.sh
+          shfmt -d bootstrap bin claude/hooks scripts self-hosted sandboxes
       - name: Lint Markdown
         run: rumdl check .
       - name: Lint workflows

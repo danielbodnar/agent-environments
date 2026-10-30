@@ -114,13 +114,19 @@ publishes it to `ghcr.io/danielbodnar/agent-environments`.
 ### nono
 
 ```sh
-nono run --allow-cwd --profile ./sandboxes/nono/agent-env.json -- claude
+sandboxes/nono/claude-nono            # same arguments as claude
 ```
 
-The profile extends nono's `mise-dev` and `bun-dev` profiles.
+The launcher runs `claude` under `sandboxes/nono/agent-env.json`, which
+extends nono's `mise-dev` and `bun-dev` profiles.
 
-- `~/.claude` is read-only apart from the state directories Claude Code
-  writes, so an agent can't change its own settings, hooks, or plugins.
+- The session gets its own `CLAUDE_CONFIG_DIR` and `TMPDIR` under
+  `~/.local/state/agent-environments/nono-claude`. It starts from copies of
+  `~/.claude/settings.json`, `CLAUDE.md`, and the login.
+- `~/.claude` and `~/.claude.json` aren't writable, so a sandboxed agent
+  can't plant hooks, settings, or plugin code for later unsandboxed
+  sessions.
+- Installed plugins load read-only through `CLAUDE_CODE_PLUGIN_SEED_DIR`.
 - The mise tools are read-only.
 - Network is limited to Anthropic, GitHub, the package registries, Socket,
   OSV, Cloudflare, and 1Password.

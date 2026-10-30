@@ -1,0 +1,36 @@
+#!/bin/sh
+# claude-nono: run Claude Code inside nono with a config dir of its own.
+#
+# Usage: sandboxes/nono/claude-nono [CLAUDE ARGS...]
+#
+# The sandboxed session never writes to ~/.claude or ~/.claude.json, so it
+# can't plant hooks, settings, shell snapshots, or plugin code that a later
+# unsandboxed session would run. Instead it gets:
+#   - CLAUDE_CONFIG_DIR at ~/.local/state/agent-environments/nono-claude,
+#     seeded with copies of ~/.claude/settings.json, CLAUDE.md, and the
+#     login (.credentials.json)
+#   - TMPDIR inside that directory, since the host temp dir is off limits
+#   - the host's installed plugins as a read-only seed
+#     (CLAUDE_CODE_PLUGIN_SEED_DIR=~/.claude/plugins)
+#
+# settings.json and CLAUDE.md are re-copied on every run, so host changes
+# reach the sandbox and sandbox changes to them are discarded. The login
+# copy is kept, because the sandboxed session refreshes its own token.
+set -eu
+
+here=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+state="$HOME/.local/state/agent-environments/nono-claude"
+host="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
+mkdir -p "$state/tmp"
+chmod 700 "$state"
+for f in settings.json CLAUDE.md; do
+	[ -r "$host/$f" ] && cp "$host/$f" "$state/$f"
+done
+[ -e "$state/.credentials.json" ] || {
+	[ -r "$host/.credentials.json" ] && cp -p "$host/.credentials.json" "$state/.credentials.json"
+}
+
+exec nono run --allow-cwd --profile "$here/agent-env.json" -- \
+	env CLAUDE_CONFIG_DIR="$state" TMPDIR="$state/tmp" \
+	CLAUDE_CODE_PLUGIN_SEED_DIR="$host/plugins" claude "$@"
