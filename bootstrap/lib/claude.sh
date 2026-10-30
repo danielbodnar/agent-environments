@@ -66,11 +66,21 @@ claude_plugins() {
 	# failures, so a missing marketplace or plugin fails the step (and a
 	# --strict image build) instead of passing with an incomplete set.
 	_rc=0
-	_known=$(claude plugin marketplace list 2>/dev/null || true)
+	_installed=$(claude plugin list 2>/dev/null || true)
+	# Marketplaces some missing plugin still needs. A plugin counts as
+	# present under any marketplace: one synced from claude.ai shows up as
+	# <name>@synced, and installing it again from its own marketplace would
+	# load it twice.
 	# shellcheck disable=SC2086 # two file names at most
+	_needed=$(list_entries_all $_pl | while read -r _plugin; do
+		case $_installed in *" ${_plugin%@*}@"*) ;; *) echo "${_plugin#*@}" ;; esac
+	done)
+	_known=$(claude plugin marketplace list 2>/dev/null || true)
+	# shellcheck disable=SC2086
 	list_entries_all $_mk | {
 		_fail=0
 		while read -r _name _src; do
+			printf '%s\n' "$_needed" | grep -qxF "$_name" || continue
 			case $_known in *"$_name"*) continue ;; esac
 			claude plugin marketplace add "$_src" || {
 				warn "marketplace add failed: $_src"
@@ -80,12 +90,11 @@ claude_plugins() {
 		exit "$_fail"
 	} || _rc=1
 
-	_installed=$(claude plugin list 2>/dev/null || true)
 	# shellcheck disable=SC2086
 	list_entries_all $_pl | {
 		_fail=0
 		while read -r _plugin; do
-			case $_installed in *"$_plugin"*) continue ;; esac
+			case $_installed in *" ${_plugin%@*}@"*) continue ;; esac
 			claude plugin install --scope user "$_plugin" || {
 				warn "plugin install failed: $_plugin"
 				_fail=$((_fail + 1))

@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   claude:
-    if: contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    if: github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-24.04
     permissions:
       contents: read
