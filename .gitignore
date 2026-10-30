@@ -1,0 +1,10 @@
+# 1Password Connect credentials and resolved secrets
+1password-credentials.json
+.env
+.env.*
+!.env.tpl
+!*.env.example
+
+# Local overlays
+.claude/settings.local.json
+.tmp/
