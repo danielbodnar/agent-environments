@@ -48,6 +48,7 @@ op_install_zip() {
 	esac
 	_ver=$(curl -fsSL https://app-updates.agilebits.com/check/1/0/CLI2/en/2.0.0/N |
 		grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n1) || return 1
+	mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
 	_work=$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/op-install.XXXXXX") || return 1
 	curl -fsSL -o "$_work/op.zip" \
 		"https://cache.agilebits.com/dist/1P/op2/pkg/v$_ver/op_linux_${_arch}_v$_ver.zip" &&

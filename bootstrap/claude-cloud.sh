@@ -9,9 +9,6 @@
 # Needs the network to reach GitHub, mise.run, and the package hosts in
 # env/cloud-network-allowlist.txt.
 
-# Only run in Claude cloud; this script is a no-op anywhere else.
-[ "${CLAUDE_CODE_REMOTE:-}" = true ] || exit 0
-
 repo=https://github.com/danielbodnar/agent-environments.git
 dest=/opt/agent-environments
 

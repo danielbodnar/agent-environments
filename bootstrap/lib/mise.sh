@@ -48,13 +48,21 @@ mise_tools() {
 	# setup run never reaches the GitHub API to look up "latest". That
 	# matters in the cloud setup script, where GitHub calls are anonymous
 	# and rate limited.
-	(cd "$_cfg_dir" && "$_mise" install --locked --yes) || {
-		warn "locked install failed, retrying without --locked"
-		(cd "$_cfg_dir" && "$_mise" install --yes)
-	}
+	#
+	# Strict runs (CI, image builds) stop there. Others retry without the
+	# lock, so a session still gets tools when one locked URL has gone
+	# stale, and say so.
+	_rc=0
+	(cd "$_cfg_dir" && "$_mise" install --locked --yes) || _rc=$?
+	if [ "$_rc" -ne 0 ] && [ "${AGENT_ENV_STRICT:-0}" != 1 ]; then
+		warn "locked install failed; retrying without --locked, versions may differ from mise.lock"
+		_rc=0
+		(cd "$_cfg_dir" && "$_mise" install --yes) || _rc=$?
+	fi
 
 	path_prepend "${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims"
-	"$_mise" reshim
+	"$_mise" reshim || true
+	return "$_rc"
 }
 
 # Write a profile.d snippet so login shells find mise's shims. Bash tool

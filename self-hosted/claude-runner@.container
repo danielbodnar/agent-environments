@@ -23,7 +23,9 @@ Exec=claude self-hosted-runner \
   --exec-path /opt/agent-environments/self-hosted/runner-wrapper.sh \
   --capacity 1
 Secret=claude-environment-secret,type=mount,mode=0400,uid=1000
-Secret=op-service-account-token,type=env,target=OP_SERVICE_ACCOUNT_TOKEN
+# Optional: uncomment after `podman secret create op-service-account-token`.
+# Podman refuses to start the container while a listed secret is missing.
+#Secret=op-service-account-token,type=env,target=OP_SERVICE_ACCOUNT_TOKEN
 Volume=claude-runner-%i:/home/agent/runner
 NoNewPrivileges=true
 DropCapability=ALL

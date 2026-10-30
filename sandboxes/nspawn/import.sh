@@ -47,5 +47,5 @@ cid=$("$engine" create "$image")
 trap '"$engine" rm -f "$cid" >/dev/null' EXIT
 "$engine" export "$cid" | sudo tar -x -C "$dest" --numeric-owner
 
-sudo install -m 0644 "$(dirname "$0")/agent-env.nspawn" "/etc/systemd/nspawn/$name.nspawn"
+sudo install -D -m 0644 "$(dirname "$0")/agent-env.nspawn" "/etc/systemd/nspawn/$name.nspawn"
 echo "machine ready: sudo systemd-nspawn -M $name"

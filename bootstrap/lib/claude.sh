@@ -31,7 +31,13 @@ claude_user_files() {
 	# Hooks call scripts from this checkout. Pin the path in the merged copy.
 	_new=$(sed "s|\${AGENT_ENV_HOME}|$_repo|g" "$_repo/claude/settings.json")
 	if [ -s "$_dir/settings.json" ]; then
-		printf '%s' "$_new" | jq -s '.[0] * .[1]' "$_dir/settings.json" - >"$_dir/settings.json.new"
+		# A failed merge (say, invalid JSON in the existing file) must leave
+		# the user's settings alone.
+		printf '%s' "$_new" | jq -s '.[0] * .[1]' "$_dir/settings.json" - >"$_dir/settings.json.new" || {
+			rm -f "$_dir/settings.json.new"
+			warn "couldn't merge into $_dir/settings.json; left it unchanged"
+			return 1
+		}
 	else
 		printf '%s\n' "$_new" >"$_dir/settings.json.new"
 	fi
@@ -56,19 +62,38 @@ claude_plugins() {
 	fi
 	export CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1
 
+	# Each loop runs in a pipeline subshell and exits with the number of
+	# failures, so a missing marketplace or plugin fails the step (and a
+	# --strict image build) instead of passing with an incomplete set.
+	_rc=0
 	_known=$(claude plugin marketplace list 2>/dev/null || true)
 	# shellcheck disable=SC2086 # two file names at most
-	list_entries_all $_mk | while read -r _name _src; do
-		case $_known in *"$_name"*) continue ;; esac
-		claude plugin marketplace add "$_src" || warn "marketplace add failed: $_src"
-	done
+	list_entries_all $_mk | {
+		_fail=0
+		while read -r _name _src; do
+			case $_known in *"$_name"*) continue ;; esac
+			claude plugin marketplace add "$_src" || {
+				warn "marketplace add failed: $_src"
+				_fail=$((_fail + 1))
+			}
+		done
+		exit "$_fail"
+	} || _rc=1
 
 	_installed=$(claude plugin list 2>/dev/null || true)
 	# shellcheck disable=SC2086
-	list_entries_all $_pl | while read -r _plugin; do
-		case $_installed in *"$_plugin"*) continue ;; esac
-		claude plugin install --scope user "$_plugin" || warn "plugin install failed: $_plugin"
-	done
+	list_entries_all $_pl | {
+		_fail=0
+		while read -r _plugin; do
+			case $_installed in *"$_plugin"*) continue ;; esac
+			claude plugin install --scope user "$_plugin" || {
+				warn "plugin install failed: $_plugin"
+				_fail=$((_fail + 1))
+			}
+		done
+		exit "$_fail"
+	} || _rc=1
+	return "$_rc"
 }
 
 list_entries_all() {

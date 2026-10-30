@@ -1,15 +1,20 @@
 name: claude
 
-# Claude Code on issue and PR comments that mention @claude, running on
-# the agent-environments toolchain with the curated plugins.
+# Claude Code answers issue and PR comments that mention @claude, as a
+# read-only reviewer on the agent-environments settings and plugins.
 #
 # Secrets:
 #   CLAUDE_CODE_OAUTH_TOKEN   from `claude setup-token`
 #
-# The agent here acts on comment text, so it gets no 1Password token: a
-# prompt-injected comment could otherwise make it print or send secrets.
-# Resolve any secret a job needs in its own step, scoped to one command.
-
+# The issue or PR text the agent reads can carry a prompt injection, even
+# when a trusted collaborator wrote the comment. So the agent gets:
+#   - no shell (Read, Glob, Grep only), so it can't print its environment,
+#     which holds the OAuth token, or run git
+#   - contents: read, so nothing it does can push
+#   - write access only to post its reply on the issue or PR
+#   - no 1Password token
+# id-token: write lets the action mint its own GitHub App token.
+# Widen allowedTools only for a workflow that runs on trusted input.
 on:
   # zizmor: ignore[dangerous-triggers] -- the job runs only for comments from owners, members, and collaborators.
   issue_comment:
@@ -25,7 +30,7 @@ jobs:
     if: contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-24.04
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       issues: write
       id-token: write
@@ -47,7 +52,7 @@ jobs:
             superpowers@claude-plugins-official
             pr-review-toolkit@claude-plugins-official
             code-review@claude-plugins-official
-            commit-commands@claude-plugins-official
             security-guidance@claude-plugins-official
             cloudflare@cloudflare
           settings: claude/settings.json
+          claude_args: --allowedTools Read,Glob,Grep
