@@ -1,22 +1,31 @@
 name: claude
 
 # Claude Code answers issue and PR comments that mention @claude, as a
-# read-only reviewer on the agent-environments settings and plugins.
+# read-only reviewer.
 #
 # Secrets:
 #   CLAUDE_CODE_OAUTH_TOKEN   from `claude setup-token`
 #
-# The issue or PR text the agent reads can carry a prompt injection, even
-# when a trusted collaborator wrote the comment. So the agent gets:
-#   - no shell (Read, Glob, Grep only), so it can't print its environment,
-#     which holds the OAuth token, or run git
-#   - contents: read, so nothing it does can push
-#   - write access only to post its reply on the issue or PR
+# On a PR the checkout is the PR's code, which can come from a fork, and
+# the issue or PR text can carry a prompt injection even when a trusted
+# collaborator wrote the comment. So nothing from the checkout runs:
+#   - no setup step and no settings file from the repo; settings are inline
+#   - --setting-sources user and --strict-mcp-config, so a PR's
+#     .claude/settings.json hooks and .mcp.json servers are ignored
+#   - no plugins (plugins can carry hooks and MCP servers)
+#   - tools limited to Read, Glob, Grep: no shell, so no way to print the
+#     OAuth token from the environment or run git
+#   - contents: read, so nothing can be pushed; write access only to post
+#     the reply
 #   - no 1Password token
 # id-token: write lets the action mint its own GitHub App token.
-# Widen allowedTools only for a workflow that runs on trusted input.
+#
+# For agent work that needs the toolchain, run on trusted input only, for
+# example workflow_dispatch on a branch, with
+# .github/actions/setup-agent-env.
+
 on:
-  # zizmor: ignore[dangerous-triggers] -- the job runs only for comments from owners, members, and collaborators.
+  # zizmor: ignore[dangerous-triggers] -- only owners, members, and collaborators trigger it, and nothing from the checkout executes.
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -38,21 +47,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-agent-env
-        id: agent-env
       - uses: anthropics/claude-code-action@6d5ae526d25ce88daa2200be073e1a373167f064 # v1.0.265
-        env:
-          AGENT_ENV_HOME: ${{ steps.agent-env.outputs.home }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: |
-            https://github.com/anthropics/claude-plugins-official.git
-            https://github.com/cloudflare/skills.git
-          plugins: |
-            superpowers@claude-plugins-official
-            pr-review-toolkit@claude-plugins-official
-            code-review@claude-plugins-official
-            security-guidance@claude-plugins-official
-            cloudflare@cloudflare
-          settings: claude/settings.json
-          claude_args: --allowedTools Read,Glob,Grep
+          settings: '{"attribution": {"commit": "", "pr": ""}}'
+          claude_args: --allowedTools Read,Glob,Grep --setting-sources user --strict-mcp-config

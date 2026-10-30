@@ -85,10 +85,17 @@ installs them into `/root/.claude` instead.
     OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 ```
 
-`.github/workflows/claude.yml` runs `anthropics/claude-code-action@v1` on
-top of it, with the curated plugins passed through `plugin_marketplaces`
-and `plugins`. That agent acts on comment text, so it gets no 1Password
-token: a prompt-injected comment could otherwise leak it.
+`.github/workflows/claude.yml` runs `anthropics/claude-code-action@v1` as a
+read-only reviewer on `@claude` comments.
+
+- A PR checkout can be fork code, and issue text can carry a prompt
+  injection. So that workflow runs nothing from the checkout: no setup
+  step, no repo settings, no plugins.
+- The agent gets Read, Glob, and Grep only, no shell, and no 1Password
+  token.
+
+Use the composite action, with its plugins and secrets, only in workflows
+that run on trusted input.
 
 ### Container image
 
