@@ -114,6 +114,17 @@ layout are in the Log.
   `~/.claude` and `~/.claude.json` unwritable.
 - 2026-10-29 [changed] `claude.yml` no longer passes `OP_SERVICE_ACCOUNT_TOKEN`
   to the comment-driven agent.
+- 2026-10-29 [done] PR #1 review round (Copilot, Superagent, security-guidance):
+  cloud-script guard removed (it blocked setup when `CLAUDE_CODE_REMOTE` was
+  unset), `with-secrets` unbound `no_masking` fixed, the composite action runs
+  the caller's pinned ref instead of cloning `main`, layer failures propagate
+  under `--strict`, the nspawn import keeps PATH and the seed dir, and the
+  claude-nono launcher never follows sandbox-planted symlinks.
+- 2026-10-29 [changed] `claude.yml` is a read-only reviewer that executes
+  nothing from the PR checkout: no setup step, plugins, or repo settings;
+  `--setting-sources user --strict-mcp-config`; Read/Glob/Grep only.
+- 2026-10-29 [todo] Superagent still reports one concern on `9205400`; its
+  details are only on superagent.sh.
 - 2026-10-29 [todo] Run a real Claude cloud session and record whether
   plugins installed by the setup script survive the snapshot.
 - 2026-10-29 [todo] Deploy 1Password Connect only if service account rate
