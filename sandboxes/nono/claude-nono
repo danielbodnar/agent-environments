@@ -1,0 +1,72 @@
+#!/bin/sh
+# claude-nono: run Claude Code inside nono with a config dir of its own.
+#
+# Usage: sandboxes/nono/claude-nono [CLAUDE ARGS...]
+#
+# The sandboxed session never writes to ~/.claude or ~/.claude.json, so it
+# can't plant hooks, settings, shell snapshots, or plugin code that a later
+# unsandboxed session would run. Instead it gets:
+#   - CLAUDE_CONFIG_DIR at ~/.local/state/agent-environments/nono-claude,
+#     seeded with copies of ~/.claude/settings.json, CLAUDE.md, and the
+#     login (.credentials.json)
+#   - TMPDIR inside that directory, since the host temp dir is off limits
+#   - the host's installed plugins as a read-only seed
+#     (CLAUDE_CODE_PLUGIN_SEED_DIR=~/.claude/plugins)
+#
+# settings.json and CLAUDE.md are re-copied on every run, so host changes
+# reach the sandbox and sandbox changes to them are discarded. The login
+# copy is kept, because the sandboxed session refreshes its own token.
+set -eu
+
+here=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+state="$HOME/.local/state/agent-environments/nono-claude"
+host="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
+mkdir -p "$state/tmp"
+
+# The sandbox can write anything under $state, so treat it as untrusted:
+# it may have swapped a file or directory for a symlink to somewhere on
+# the host. This script runs outside the sandbox and must never follow one.
+for d in "$state" "$state/tmp"; do
+	# shellcheck disable=SC2012 # numeric owner of one known path; find -user is not POSIX for this
+	if [ -L "$d" ] || [ ! -d "$d" ] || [ "$(ls -ldn "$d" | awk '{print $3}')" != "$(id -u)" ]; then
+		echo "claude-nono: $d isn't a directory owned by $(id -un); refusing to run" >&2
+		exit 1
+	fi
+done
+chmod 700 "$state"
+
+# Files are staged next to $state in a directory the sandbox can't reach
+# (the profile grants nothing under it), so a running sandbox can't race
+# the copy. The same filesystem keeps the final move an atomic rename.
+staging="$HOME/.local/state/agent-environments/nono-staging"
+mkdir -p "$staging"
+chmod 700 "$staging"
+
+# put SRC NAME: install SRC as $state/NAME with one rename that never
+# follows a symlink at the destination: GNU `mv -T`, or BSD/macOS `mv -h`.
+# There's no check-then-move, so a running sandbox has nothing to race.
+# If neither flag works, refuse rather than fall back to plain mv.
+put() {
+	_tmp=$(mktemp "$staging/put.XXXXXX")
+	cp "$1" "$_tmp"
+	chmod 600 "$_tmp"
+	mv -fT "$_tmp" "$state/$2" 2>/dev/null ||
+		mv -fh "$_tmp" "$state/$2" 2>/dev/null || {
+		rm -f "$_tmp"
+		echo "claude-nono: can't safely replace $state/$2 (needs mv -T or mv -h)" >&2
+		exit 1
+	}
+}
+
+for f in settings.json CLAUDE.md; do
+	if [ -f "$host/$f" ]; then put "$host/$f" "$f"; fi
+done
+# Keep the sandbox's own login, unless it's missing or isn't a plain file.
+if [ -L "$state/.credentials.json" ] || [ ! -f "$state/.credentials.json" ]; then
+	if [ -f "$host/.credentials.json" ]; then put "$host/.credentials.json" .credentials.json; fi
+fi
+
+exec nono run --allow-cwd --profile "$here/agent-env.json" -- \
+	env CLAUDE_CONFIG_DIR="$state" TMPDIR="$state/tmp" \
+	CLAUDE_CODE_PLUGIN_SEED_DIR="$host/plugins" claude "$@"

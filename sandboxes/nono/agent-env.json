@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "name": "agent-env",
+    "description": "Claude Code with the agent-environments toolchain, using a sandbox-only config dir (see claude-nono). The host ~/.claude is never writable; installed plugins are read-only."
+  },
+  "extends": [
+    "mise-dev",
+    "bun-dev"
+  ],
+  "workdir": {
+    "access": "readwrite"
+  },
+  "filesystem": {
+    "allow": [
+      "$HOME/.cache",
+      "$HOME/.local/state/agent-environments/nono-claude"
+    ],
+    "read": [
+      "$HOME/.claude/plugins",
+      "$HOME/.local/share/claude",
+      "$HOME/.local/bin",
+      "$HOME/.local/share/mise",
+      "$XDG_CONFIG_HOME/mise",
+      "$HOME/.config/op"
+    ]
+  },
+  "network": {
+    "allow_domain": [
+      "api.anthropic.com",
+      "claude.ai",
+      "*.claude.ai",
+      "platform.claude.com",
+      "statsig.anthropic.com",
+      "github.com",
+      "api.github.com",
+      "*.githubusercontent.com",
+      "registry.npmjs.org",
+      "registry.vlt.io",
+      "api.socket.dev",
+      "api.osv.dev",
+      "*.1password.com",
+      "api.cloudflare.com"
+    ]
+  }
+}

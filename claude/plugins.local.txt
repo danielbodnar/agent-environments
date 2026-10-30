@@ -1,0 +1,4 @@
+# Plugins for workstations only. The 1Password plugin talks to the
+# 1Password desktop app's MCP server, so it can't work in a headless VM,
+# container, or CI job.
+1password@1password

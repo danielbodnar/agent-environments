@@ -1,0 +1,52 @@
+name: Set up agent environment
+description: >-
+  Install the agent-environments toolchain (mise tools, 1Password CLI,
+  Claude Code) on a GitHub-hosted Ubuntu runner, and optionally load
+  1Password secrets into the job environment.
+inputs:
+  profile:
+    description: Tool profile, core or full
+    default: core
+  layers:
+    description: Comma-separated setup.sh layers
+    default: system,tools,op
+  op-env-file:
+    description: Env file of op:// references to export (path in the calling repo). Empty skips it.
+    default: ""
+outputs:
+  home:
+    description: Path of the agent-environments checkout the action installed from
+    value: ${{ steps.fetch.outputs.home }}
+runs:
+  using: composite
+  steps:
+    - name: Locate agent-environments
+      id: fetch
+      shell: bash
+      run: |
+        # The runner downloads the whole action repo at the ref the caller
+        # pinned (or uses this checkout for `uses: ./...`), so the scripts
+        # that run are exactly the ones at that ref. No clone of `main`.
+        echo "home=$(cd "$GITHUB_ACTION_PATH/../../.." && pwd)" >>"$GITHUB_OUTPUT"
+    - name: Install toolchain
+      shell: bash
+      env:
+        PROFILE: ${{ inputs.profile }}
+        LAYERS: ${{ inputs.layers }}
+        AGENT_ENV_HOME: ${{ steps.fetch.outputs.home }}
+        AGENT_ENV_STRICT: "1"
+      run: |
+        sh "$AGENT_ENV_HOME/bootstrap/setup.sh" --profile "$PROFILE" --only "$LAYERS"
+        {
+          echo "$AGENT_ENV_HOME/bin"
+          echo "$HOME/.local/bin"
+          echo "$HOME/.local/share/mise/shims"
+        } >>"$GITHUB_PATH"
+    - name: Load 1Password secrets
+      if: inputs.op-env-file != ''
+      uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
+      with:
+        export-env: true
+        version: 2.41.1
+      env:
+        OP_ENV_FILE: ${{ inputs.op-env-file }}

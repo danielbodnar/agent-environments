@@ -1,0 +1,27 @@
+# Custom network access for a Claude Code cloud environment.
+# Pick "Custom", paste the domains below (one per line), and tick
+# "Also include default list of common package managers", which covers
+# GitHub, npm, and the other package registries.
+#
+# Domains the setup script and tools need beyond that default list:
+mise.run
+mise.jdx.dev
+*.jdx.dev
+downloads.1password.com
+cache.agilebits.com
+app-updates.agilebits.com
+keyserver.ubuntu.com
+claude.ai
+downloads.claude.ai
+registry.vlt.io
+*.vlt.io
+api.socket.dev
+*.socket.dev
+api.osv.dev
+api.cloudflare.com
+dash.cloudflare.com
+*.workers.dev
+# 1Password service accounts and Connect, at session time
+*.1password.com
+*.1password.eu
+*.1password.ca

@@ -1,0 +1,33 @@
+{
+  "name": "agent-environments",
+  "build": {
+    "dockerfile": "../images/Dockerfile",
+    "context": "..",
+    "args": { "PROFILE": "full" }
+  },
+  "remoteUser": "agent",
+  "containerEnv": {
+    "DEVCONTAINER": "true",
+    "CLAUDE_CONFIG_DIR": "/home/agent/.claude"
+  },
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/agent/.claude,type=volume"
+  ],
+  "secrets": {
+    "OP_SERVICE_ACCOUNT_TOKEN": {
+      "description": "1Password service account token for bin/with-secrets"
+    },
+    "OP_ENVIRONMENT_ID": {
+      "description": "1Password Environment to load with op run --environment"
+    },
+    "CLAUDE_CODE_OAUTH_TOKEN": {
+      "description": "Claude Code login token from `claude setup-token`"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code"]
+    }
+  },
+  "postStartCommand": "agent-env-doctor"
+}

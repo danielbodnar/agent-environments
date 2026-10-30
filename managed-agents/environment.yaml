@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://platform.claude.com/schemas/ant/beta/environment.json
+#
+# Claude Managed Agents environment with the npm half of the agent
+# toolchain. Apply with `ant apply managed-agents/environment.yaml`; the
+# CLI records the created ID in claude-lock.json.
+#
+# Managed Agents installs packages per manager, not from mise, so this
+# covers the CLIs an agent calls most. Versions match tools/core/mise.toml.
+type: environment
+name: agent-environments
+description: Bun, Cloudflare, vlt, Socket, and 1Password CLIs for agent sessions
+config:
+  type: cloud
+  packages:
+    apt:
+      - jq
+      - ripgrep
+      - fd-find
+      - shellcheck
+    npm:
+      - wrangler@4.156.0
+      - cf@1.0.0-beta.26
+      - vlt@1.6.1
+      - socket@1.12.1
+      - sfw@2.0.6
+  networking:
+    type: limited
+    allow_package_managers: true
+    allow_mcp_servers: true
+    allowed_hosts:
+      - api.cloudflare.com
+      - registry.vlt.io
+      - api.socket.dev
+      - api.osv.dev
+      - my.1password.com
