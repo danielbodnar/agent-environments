@@ -5,7 +5,10 @@ name: claude
 #
 # Secrets:
 #   CLAUDE_CODE_OAUTH_TOKEN   from `claude setup-token`
-#   OP_SERVICE_ACCOUNT_TOKEN  optional, for with-secrets inside the job
+#
+# The agent here acts on comment text, so it gets no 1Password token: a
+# prompt-injected comment could otherwise make it print or send secrets.
+# Resolve any secret a job needs in its own step, scoped to one command.
 
 on:
   # zizmor: ignore[dangerous-triggers] -- the job runs only for comments from owners, members, and collaborators.
@@ -35,7 +38,6 @@ jobs:
       - uses: anthropics/claude-code-action@6d5ae526d25ce88daa2200be073e1a373167f064 # v1.0.265
         env:
           AGENT_ENV_HOME: ${{ steps.agent-env.outputs.home }}
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: |

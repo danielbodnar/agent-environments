@@ -87,7 +87,8 @@ installs them into `/root/.claude` instead.
 
 `.github/workflows/claude.yml` runs `anthropics/claude-code-action@v1` on
 top of it, with the curated plugins passed through `plugin_marketplaces`
-and `plugins`.
+and `plugins`. That agent acts on comment text, so it gets no 1Password
+token: a prompt-injected comment could otherwise leak it.
 
 ### Container image
 
@@ -116,9 +117,13 @@ publishes it to `ghcr.io/danielbodnar/agent-environments`.
 nono run --allow-cwd --profile ./sandboxes/nono/agent-env.json -- claude
 ```
 
-The profile extends nono's `mise-dev` and `bun-dev` profiles. It allows
-`~/.claude`, reads the mise tools, and limits network to Anthropic,
-GitHub, the package registries, Socket, OSV, Cloudflare, and 1Password.
+The profile extends nono's `mise-dev` and `bun-dev` profiles.
+
+- `~/.claude` is read-only apart from the state directories Claude Code
+  writes, so an agent can't change its own settings, hooks, or plugins.
+- The mise tools are read-only.
+- Network is limited to Anthropic, GitHub, the package registries, Socket,
+  OSV, Cloudflare, and 1Password.
 
 ### Claude Managed Agents
 
