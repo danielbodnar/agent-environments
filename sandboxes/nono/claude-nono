@@ -36,13 +36,30 @@ for d in "$state" "$state/tmp"; do
 done
 chmod 700 "$state"
 
-# put SRC NAME: copy SRC to $state/NAME through a new temp file and a
-# rename, which replaces a symlink at the destination instead of writing
-# through it.
+# Files are staged next to $state in a directory the sandbox can't reach
+# (the profile grants nothing under it), so a running sandbox can't race
+# the copy. The same filesystem keeps the final move an atomic rename.
+staging="$HOME/.local/state/agent-environments/nono-staging"
+mkdir -p "$staging"
+chmod 700 "$staging"
+
+# put SRC NAME: install SRC as $state/NAME by rename. -T stops mv from
+# treating a symlink-to-directory at the destination as a directory to
+# move into. Without GNU mv, unlink a symlink first and refuse a directory.
 put() {
-	_tmp=$(mktemp "$state/.put.XXXXXX")
+	_tmp=$(mktemp "$staging/put.XXXXXX")
 	cp "$1" "$_tmp"
 	chmod 600 "$_tmp"
+	if mv -fT "$_tmp" "$state/$2" 2>/dev/null; then
+		return 0
+	fi
+	if [ -L "$state/$2" ]; then
+		rm -f "$state/$2"
+	elif [ -d "$state/$2" ]; then
+		rm -f "$_tmp"
+		echo "claude-nono: $state/$2 is a directory; refusing to replace it" >&2
+		exit 1
+	fi
 	mv -f "$_tmp" "$state/$2"
 }
 
